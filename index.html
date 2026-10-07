@@ -251,7 +251,7 @@ document.getElementById('btnReservar').onclick=async()=>{
     sel.clear(); setTimeout(loadFromSheets,2000); render();
   } catch(e){ alert('Error: '+e.message); }
 };
-  
+
 loadFromSheets();
 render();
 setInterval(()=>{ if(APPSCRIPT_URL || SHEET_ID) loadFromSheets(); }, 15000);
