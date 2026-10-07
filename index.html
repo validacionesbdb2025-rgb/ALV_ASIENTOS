@@ -109,7 +109,7 @@
 </section>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMhKnDbi65qvJCMyyRSZVHuwA1s8X1m-rb4R3iIJUPHifcCvE_xT1qsrsqWq_-K4UO/exec"; // <-- CAMBIA ESTA URL POR LA TUYA DESPUÉS DE DESPLEGAR
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdmKf83N6--JLqViTn_UlZ-JDBW-vSZR5ROlT0-lLAYD71RFKZ7McTV2uGv6MHvGXw/exec";
 
 let occupiedSeats = new Set();
 const rows = [
@@ -130,25 +130,15 @@ let sel = new Set();
 
 async function loadFromSheets(){
   const dot = document.getElementById('statusDot');
-  if(!APPSCRIPT_URL.startsWith('http') || APPSCRIPT_URL.includes('PEGAR_AQUI')){ 
-    dot.textContent='● CONFIGURA TU URL'; 
-    dot.className = dot.className.replace('bg-black','bg-red-600');
-    return; 
-  }
+  if(!APPSCRIPT_URL.startsWith('http')){ dot.textContent='● LET IT ROCK 🤘'; return; }
   try {
-    dot.textContent='● CARGANDO...';
-    // cache: no-store evita que Google cachee el GET
-    const res = await fetch(APPSCRIPT_URL + '?action=get&t=' + Date.now(), { method: 'GET', cache: 'no-store' });
-    if(!res.ok) throw new Error('HTTP '+res.status);
+    const res = await fetch(APPSCRIPT_URL + '?action=get&t='+Date.now(), {cache:'no-store'});
     const data = await res.json();
     occupiedSeats = new Set((data.ocupados||[]).map(n=>parseInt(n)));
     dot.textContent = `● LET IT ROCK 🤘 • ${occupiedSeats.size} OCUPADOS`;
     occupiedSeats.forEach(n=>sel.delete(n));
     render();
-  } catch(e){ 
-    console.error(e);
-    dot.textContent='● LET IT ROCK 🤘 • SIN CONEXIÓN (mostrando libre)';
-  }
+  } catch(e){ dot.textContent='● LET IT ROCK 🤘'; }
 }
 
 function render(){
@@ -169,48 +159,17 @@ function render(){
 function toggle(n){ if(occupiedSeats.has(n)) return; if(sel.has(n)) sel.delete(n); else sel.add(n); render(); }
 document.getElementById('btnClear').onclick=()=>{sel.clear(); render();};
 document.getElementById('btnReservar').onclick=async()=>{
-  const btn = document.getElementById('btnReservar');
   const abordaje=document.getElementById('abordaje').value;
   const nom=document.getElementById('nombre').value.trim(); 
   const wa=document.getElementById('whats').value.trim();
   if(sel.size===0) return alert('¡Elige asientos!');
   if(!abordaje) return alert('¡Elige punto de abordaje!');
   if(!nom||!wa) return alert('Pon nombre y WhatsApp');
-  if(APPSCRIPT_URL.includes('PEGAR_AQUI')) return alert('Pega tu URL de Apps Script en APPSCRIPT_URL');
-  
-  const originalText = btn.textContent;
   try {
-    btn.textContent = 'GUARDANDO...';
-    btn.disabled = true;
-    
-    const payload = {asientos:Array.from(sel), nombre:nom, whats:wa, abordaje:abordaje};
-    
-    // IMPORTANTE: text/plain evita preflight de CORS en Apps Script
-    const res = await fetch(APPSCRIPT_URL, {
-      method:'POST', 
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload)
-    });
-    
-    const result = await res.json();
-    
-    if(result.ok === false){
-      alert('⚠️ ' + (result.msg || 'Error') + (result.ocupados ? '\nOcupados: '+result.ocupados.join(', ') : ''));
-      await loadFromSheets(); // refresca
-      return;
-    }
-    
+    await fetch(APPSCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({asientos:Array.from(sel), nombre:nom, whats:wa, abordaje:abordaje})}).then(r=>r.json()).then(d=>{ if(d.ok===false) throw new Error(d.msg); });
     alert('¡LET IT ROCK! Apartaste '+Array.from(sel).join(', ')+' en '+abordaje);
-    sel.clear(); 
-    await loadFromSheets(); 
-    render();
-  } catch(e){ 
-    console.error(e);
-    alert('Error de conexión: ' + e.message + '\nRevisa que hayas desplegado como "Cualquier usuario"');
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
+    sel.clear(); setTimeout(loadFromSheets,2000); render();
+  } catch(e){ alert('Error'); }
 };
 loadFromSheets(); render(); setInterval(loadFromSheets,15000);
 </script>
