@@ -251,18 +251,7 @@ document.getElementById('btnReservar').onclick=async()=>{
     sel.clear(); setTimeout(loadFromSheets,2000); render();
   } catch(e){ alert('Error: '+e.message); }
 };
-  <div class="form-group">
-  <label for="puntoAbordaje">Punto de abordaje</label>
-
-  <select id="puntoAbordaje" name="puntoAbordaje" required>
-    <option value="" selected disabled>Selecciona tu punto de abordaje</option>
-    <option value="General Anaya">General Anaya</option>
-    <option value="Revolución">Revolución</option>
-    <option value="Politécnico">Politécnico</option>
-    <option value="Pista Izcalli (Reloj Ford)">Pista Izcalli (Reloj Ford)</option>
-  </select>
-</div>
-
+  
 loadFromSheets();
 render();
 setInterval(()=>{ if(APPSCRIPT_URL || SHEET_ID) loadFromSheets(); }, 15000);
